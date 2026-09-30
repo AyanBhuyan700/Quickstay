@@ -6,7 +6,7 @@ import { useApp } from "../../context/AppContext";
 import { useUser, useClerk } from "@clerk/clerk-react";
 
 const Layout = () => {
-  const { isOwner, setIsHotelRegOpen } = useApp();
+  const { isOwner = false, setIsHotelRegOpen = () => {} } = useApp() || {};
   const { isSignedIn } = useUser();
   const { openSignIn } = useClerk();
   const navigate = useNavigate();
