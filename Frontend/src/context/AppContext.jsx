@@ -4,7 +4,28 @@ import { useAuth, useUser } from '@clerk/clerk-react';
 import { roomsDummyData, userBookingsDummyData } from '../assets/assets';
 import toast from 'react-hot-toast';
 
-export const AppContext = createContext();
+const defaultAppContext = {
+    backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081',
+    rooms: roomsDummyData,
+    setRooms: () => {},
+    loadingRooms: false,
+    fetchRooms: () => {},
+    isHotelRegOpen: false,
+    setIsHotelRegOpen: () => {},
+    userRole: 'user',
+    setUserRole: () => {},
+    ownerHotel: null,
+    setOwnerHotel: () => {},
+    userBookings: [],
+    setUserBookings: () => {},
+    loadingBookings: false,
+    fetchUserBookings: () => {},
+    fetchUserData: () => {},
+    getAuthHeaders: async () => ({}),
+    isOwner: false,
+};
+
+export const AppContext = createContext(defaultAppContext);
 
 export const AppContextProvider = ({ children }) => {
     const rawBackendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8081';
@@ -144,4 +165,4 @@ export const AppContextProvider = ({ children }) => {
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useApp = () => useContext(AppContext);
+export const useApp = () => useContext(AppContext) || defaultAppContext;

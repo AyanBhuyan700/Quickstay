@@ -22,7 +22,7 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { openSignIn } = useClerk();
     const { user } = useUser();
-    const { isOwner, setIsHotelRegOpen } = useApp();
+    const { isOwner = false, setIsHotelRegOpen = () => {} } = useApp() || {};
     const navigate = useNavigate();
     const location = useLocation();
 
