@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { useClerk, UserButton, useUser } from "@clerk/clerk-react";
+import { useApp } from "../context/AppContext";
 
 const BookIcon = () => (
     <svg className="w-4 h-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" >
@@ -13,6 +14,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'Hotels', path: '/rooms' },
+        { name: 'Offers', path: '/offers' },
         { name: 'Experiences', path: '/experiences' },
         { name: 'About', path: '/about' },
     ];
@@ -20,6 +22,7 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { openSignIn } = useClerk();
     const { user } = useUser();
+    const { isOwner, setIsHotelRegOpen } = useApp();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -27,14 +30,12 @@ const Navbar = () => {
         if (location.pathname !== '/') {
             setIsScrolled(true);
             return;
-        }
-        else {
+        } else {
             setIsScrolled(false);
         }
 
-        setIsScrolled(prev => location.pathname !== '/' ? true : prev);
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 10);
+            setIsScrolled(window.scrollY > 10 || location.pathname !== '/');
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
@@ -56,46 +57,78 @@ const Navbar = () => {
                         <div className={`${isScrolled ? "bg-gray-700" : "bg-white"} h-0.5 w-0 group-hover:w-full transition-all duration-300`} />
                     </Link>
                 ))}
-                <Link to="/owner">
-                    <button className={`border px-4 py-1 text-sm font-light rounded-full cursor-pointer ${isScrolled ? 'text-black' : 'text-white'} transition-all`} >
-                        Dashboard
-                    </button>
-                </Link>
 
+                {isOwner ? (
+                    <Link to="/owner">
+                        <button className={`border px-4 py-1 text-sm font-light rounded-full cursor-pointer ${isScrolled ? 'text-black border-black' : 'text-white border-white'} hover:bg-black/5 transition-all`} >
+                            Dashboard
+                        </button>
+                    </Link>
+                ) : (
+                    <button
+                        onClick={() => {
+                            if (!user) {
+                                openSignIn();
+                            } else {
+                                setIsHotelRegOpen(true);
+                            }
+                        }}
+                        className={`border px-4 py-1 text-sm font-light rounded-full cursor-pointer ${isScrolled ? 'text-black border-black' : 'text-white border-white'} hover:bg-white/20 transition-all`}
+                    >
+                        List Hotel
+                    </button>
+                )}
             </div>
 
             {/* Desktop Right */}
             <div className="hidden md:flex items-center gap-4">
-                <img src={assets.searchIcon} alt="search" className={`h-7 transition-all duration-500 ${isScrolled && "invert"}`} />
-                {user ?
-                    (<UserButton>
+                <img
+                    src={assets.searchIcon}
+                    alt="search"
+                    onClick={() => navigate('/rooms')}
+                    className={`h-7 transition-all duration-500 cursor-pointer ${isScrolled && "invert"}`}
+                />
+                {user ? (
+                    <UserButton>
                         <UserButton.MenuItems>
-                            <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => { navigate('/my-bookings') }} />
+                            <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => { navigate('/my-bookings'); }} />
+                            {!isOwner && (
+                                <UserButton.Action label="List Your Hotel" labelIcon={<img src={assets.addIcon} className="w-4 h-4" alt="hotel" />} onClick={() => setIsHotelRegOpen(true)} />
+                            )}
+                            {isOwner && (
+                                <UserButton.Action label="Owner Dashboard" labelIcon={<img src={assets.dashboardIcon} className="w-4 h-4" alt="dashboard" />} onClick={() => navigate('/owner')} />
+                            )}
                         </UserButton.MenuItems>
-                    </UserButton>)
-                    :
-                    (<button className={`bg-black text-white px-8 py-2.5 rounded-full ml-4 transition-all duration-500 cursor-pointer`} onClick={openSignIn}>
+                    </UserButton>
+                ) : (
+                    <button className={`bg-black text-white px-8 py-2.5 rounded-full ml-4 transition-all duration-500 cursor-pointer`} onClick={openSignIn}>
                         Login
-                    </button>)
-                }
-
+                    </button>
+                )}
             </div>
 
             {/* Mobile Menu Button */}
-
             <div className="flex items-center gap-3 md:hidden">
-                {user && <UserButton>
-                    <UserButton.MenuItems>
-                        <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => { navigate('/my-bookings') }} />
-                    </UserButton.MenuItems>
-                </UserButton>}
+                {user && (
+                    <UserButton>
+                        <UserButton.MenuItems>
+                            <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => { navigate('/my-bookings'); }} />
+                            {!isOwner && (
+                                <UserButton.Action label="List Your Hotel" labelIcon={<img src={assets.addIcon} className="w-4 h-4" alt="hotel" />} onClick={() => setIsHotelRegOpen(true)} />
+                            )}
+                            {isOwner && (
+                                <UserButton.Action label="Owner Dashboard" labelIcon={<img src={assets.dashboardIcon} className="w-4 h-4" alt="dashboard" />} onClick={() => navigate('/owner')} />
+                            )}
+                        </UserButton.MenuItems>
+                    </UserButton>
+                )}
 
-                <img onClick={() => setIsMenuOpen(!isMenuOpen)} src={assets.menuIcon} alt="menu" className={`h-4 ${isScrolled && "invert"}`} />
+                <img onClick={() => setIsMenuOpen(!isMenuOpen)} src={assets.menuIcon} alt="menu" className={`h-4 cursor-pointer ${isScrolled && "invert"}`} />
             </div>
 
             {/* Mobile Menu */}
             <div className={`fixed top-0 left-0 w-full h-screen bg-white text-base flex flex-col md:hidden items-center justify-center gap-6 font-medium text-gray-800 transition-all duration-500 ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-                <button className="absolute top-4 right-4" onClick={() => setIsMenuOpen(false)}>
+                <button className="absolute top-4 right-4 cursor-pointer" onClick={() => setIsMenuOpen(false)}>
                     <img src={assets.closeIcon} alt="close" className="h-6.5" />
                 </button>
 
@@ -104,16 +137,32 @@ const Navbar = () => {
                         {link.name}
                     </Link>
                 ))}
-                {user && <button className="border px-4 py-1 text-sm font-light rounded-full cursor-pointer transition-all" onClick={() => { navigate("/owner") }}>
-                    Dashboard
-                </button>}
 
-                {!user && <button className="bg-black text-white px-8 py-2.5 rounded-full transition-all duration-500 cursor-pointer" onClick={openSignIn}>
-                    Login
-                </button>}
+                {isOwner ? (
+                    <button className="border px-4 py-1.5 text-sm font-light rounded-full cursor-pointer transition-all" onClick={() => { setIsMenuOpen(false); navigate("/owner"); }}>
+                        Dashboard
+                    </button>
+                ) : (
+                    <button
+                        className="border px-4 py-1.5 text-sm font-light rounded-full cursor-pointer transition-all"
+                        onClick={() => {
+                            setIsMenuOpen(false);
+                            if (!user) openSignIn();
+                            else setIsHotelRegOpen(true);
+                        }}
+                    >
+                        List Your Hotel
+                    </button>
+                )}
+
+                {!user && (
+                    <button className="bg-black text-white px-8 py-2.5 rounded-full transition-all duration-500 cursor-pointer" onClick={() => { setIsMenuOpen(false); openSignIn(); }}>
+                        Login
+                    </button>
+                )}
             </div>
         </nav>
     );
-}
+};
 
 export default Navbar;
